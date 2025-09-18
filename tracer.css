@@ -1,0 +1,29 @@
+body { margin: 0; overflow: hidden; background: black; font-family: sans-serif; }
+  #camera {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100vw; height: 100vh;
+    object-fit: cover;
+  }
+  #overlay {
+    position: absolute;
+    top: 0; left: 0;
+    max-width: none;
+    transform-origin: center center;
+    opacity: 0.5;
+    touch-action: none; /* enable multi-touch gestures */
+  }
+  #controls {
+    position: absolute;
+    bottom: 1em;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0,0,0,0.6);
+    padding: 0.5em 1em;
+    border-radius: 10px;
+    color: white;
+  }
+  #controls label {
+    display: block;
+    margin-bottom: 0.5em;
+  }

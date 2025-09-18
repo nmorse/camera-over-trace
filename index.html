@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Camera Overlay Tracer</title>
+<link rel="stylesheet" href="./tracer.css">
+  <link rel="icon" href="./favicon.svg" type="image/svg+xml">
+</head>
+<body>
+
+  <video id="camera" autoplay playsinline></video>
+  <img id="overlay" src="" alt="Overlay">
+
+  <div id="controls">
+    <label>
+      Upload Image:
+      <input type="file" id="imageUpload" accept="image/*">
+    </label>
+    <label>
+      Transparency:
+      <input type="range" id="opacitySlider" min="0" max="100" value="50">
+    </label>
+  </div>
+
+<script src="./tracer.js"></script>
+</body>
+</html>
