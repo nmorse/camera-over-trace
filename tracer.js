@@ -196,6 +196,12 @@ overlay.addEventListener("pointerup", e => {
 overlay.addEventListener("pointercancel", e => {
     pointers.delete(e.pointerId);
 });
+overlay.addEventListener("pointerleave", e => {
+    pointers.delete(e.pointerId);
+});
+overlay.addEventListener("pointerout", e => {
+    pointers.delete(e.pointerId);
+});
 
 startCamera();
 if (navigator.maxTouchPoints > 1) {
