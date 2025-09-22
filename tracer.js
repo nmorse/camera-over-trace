@@ -6,6 +6,16 @@ video.playsInline = true;
 
 const cameraCanvas = document.getElementById('cameraCanvas');
 const ctx = cameraCanvas.getContext('2d');
+const cssW = window.innerWidth;
+const cssH = window.innerHeight;
+const dpr = window.devicePixelRatio || 1;
+
+cameraCanvas.width  = cssW * dpr;
+cameraCanvas.height = cssH * dpr;
+cameraCanvas.style.width  = cssW + "px";
+cameraCanvas.style.height = cssH + "px";
+console.log("cssW, cssH, dpr:::", cssW, cssH, dpr);
+
 
 video.addEventListener("loadedmetadata", () => {
   cameraCanvas.width = video.videoWidth;
@@ -107,7 +117,7 @@ let initialX = 0, initialY = 0;
 
 // non-pointer capable display
 document.getElementById('zoomSlider').addEventListener('input', e => {
-    scale = e.target.value;
+    scale = e.target.value**2;
     updateTransform()
 });
 // non-pointer capable display
