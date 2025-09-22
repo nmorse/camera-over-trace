@@ -1,12 +1,45 @@
+const video = document.createElement('video');
+let frameInterval = 200 // milliseconds
+video.autoplay = true;
+video.playsInline = true;
+
+
+const cameraCanvas = document.getElementById('cameraCanvas');
+const ctx = cameraCanvas.getContext('2d');
+
+video.addEventListener("loadedmetadata", () => {
+  cameraCanvas.width = video.videoWidth;
+  cameraCanvas.height = video.videoHeight;
+
+  const targetFPS = 5; // e.g. 10 fps
+  frameInterval = 1000 / targetFPS;
+
+  let lastTime = 0;
+
+  function drawFrame(now) {
+    if (now - lastTime >= frameInterval) {
+      ctx.drawImage(video, 0, 0, cameraCanvas.width, cameraCanvas.height);
+      lastTime = now;
+    }
+    requestAnimationFrame(drawFrame);
+  }
+
+  requestAnimationFrame(drawFrame);
+});
+
+
 async function startCamera() {
     try {
         const stream = await navigator.mediaDevices.getUserMedia({
             video: { facingMode: "environment" },
             frameRate: { ideal: 10, max: 10 }
         });
-        document.getElementById('camera').srcObject = stream;
-        const track = stream.getVideoTracks()[0];
-        console.log(track.getSettings().frameRate);
+        video.srcObject = stream;
+
+        video.addEventListener("loadedmetadata", () => {
+            cameraCanvas.width = video.videoWidth;
+            cameraCanvas.height = video.videoHeight;
+        });
     } catch (err) {
         console.error("Camera error:", err);
     }
@@ -23,7 +56,7 @@ document.getElementById('imageUpload').addEventListener('change', e => {
             console.log('ev.target', ev.target);
             console.log('screen.availWidth', screen.availWidth);
             overlay.src = ev.target.result;
-            
+
             overlay.style.transform = "translate(0px, 0px) scale(1) rotate(0deg)";
             console.log('overlay.scrollWidth', overlay.scrollWidth);
         };
@@ -32,24 +65,24 @@ document.getElementById('imageUpload').addEventListener('change', e => {
 });
 
 overlay.addEventListener("load", () => {
-  const imgW = overlay.naturalWidth;
-  const imgH = overlay.naturalHeight;
-  const screenW = window.innerWidth;
-  const screenH = window.innerHeight;
+    const imgW = overlay.naturalWidth;
+    const imgH = overlay.naturalHeight;
+    const screenW = window.innerWidth;
+    const screenH = window.innerHeight;
 
-  // Compute scaling factor to fit screen (cover mode: min, contain mode: min)
-  const scaleFactor = Math.min(screenW / imgW, screenH / imgH) * 0.85;
+    // Compute scaling factor to fit screen (cover mode: min, contain mode: min)
+    const scaleFactor = Math.min(screenW / imgW, screenH / imgH) * 0.85;
 
-  // Reset transform state
-  scale = scaleFactor;
-  rotation = 0;
-  translateX = (screenW - imgW) / 2;
-  translateY = (screenH - imgH) / 2;
-  updateControlUI()
+    // Reset transform state
+    scale = scaleFactor;
+    rotation = 0;
+    translateX = (screenW - imgW) / 2;
+    translateY = (screenH - imgH) / 2;
+    updateControlUI()
 
-  updateTransform();
+    updateTransform();
 
-  console.log(`Image loaded at ${imgW}x${imgH}, scaled to ${scaleFactor}`);
+    console.log(`Image loaded at ${imgW}x${imgH}, scaled to ${scaleFactor}`);
 });
 
 // Transparency
@@ -82,6 +115,10 @@ document.getElementById('rotateSlider').addEventListener('input', e => {
     rotation = e.target.value
     updateTransform()
 });
+document.getElementById('frameIntervalSlider').addEventListener('input', e => {
+    frameInterval = 1000 / e.target.value
+});
+
 
 function updateControlUI() {
     document.getElementById('zoomSlider').value = scale;
@@ -153,5 +190,5 @@ startCamera();
 if (navigator.maxTouchPoints > 1) {
     document.getElementById('zoomSlider').display = 'block';
     document.getElementById('rotateSlider').display = 'block';
-  // browser supports multi-touch
+    // browser supports multi-touch
 }

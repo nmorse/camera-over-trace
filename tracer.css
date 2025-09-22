@@ -5,6 +5,12 @@ body { margin: 0; overflow: hidden; background: black; font-family: sans-serif; 
     width: 100vw; height: 100vh;
     object-fit: cover;
   }
+  #cameraCanvas {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100vw; height: 100vh;
+    object-fit: cover;
+  }
   #overlay {
     position: absolute;
     top: 0; left: 0;

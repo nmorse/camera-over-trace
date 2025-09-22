@@ -9,13 +9,18 @@
 </head>
 <body>
 
-  <video id="camera" autoplay playsinline></video>
+  <!-- <video id="camera" autoplay playsinline></video> -->
+  <canvas id="cameraCanvas"></canvas>
   <img id="overlay" src="" alt="Overlay" draggable="false">
 
   <div id="controls">
     <label>
       Upload Image:
       <input type="file" id="imageUpload" accept="image/*">
+    </label>
+    <label>
+      Frame Interval:
+      <input type="range" id="frameIntervalSlider" min="1" max="30" value="5">
     </label>
     <label>
       Transparency:
