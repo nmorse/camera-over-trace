@@ -77,22 +77,20 @@ document.getElementById('imageUpload').addEventListener('change', e => {
 overlay.addEventListener("load", () => {
     const imgW = overlay.naturalWidth;
     const imgH = overlay.naturalHeight;
-    const screenW = window.innerWidth;
-    const screenH = window.innerHeight;
-
+    
     // Compute scaling factor to fit screen (cover mode: min, contain mode: min)
-    const scaleFactor = Math.min(screenW / imgW, screenH / imgH) * 0.85;
+    const scaleFactor = Math.min(cssW / imgW, cssH / imgH) * 0.85;
 
     // Reset transform state
     scale = scaleFactor;
     rotation = 0;
-    translateX = (screenW - imgW) / 2;
-    translateY = (screenH - imgH) / 2;
+    translateX = (cssW - imgW) / 2;
+    translateY = (cssH - imgH) / 2;
     updateControlUI()
 
     updateTransform();
 
-    console.log(`Image loaded at ${imgW}x${imgH}, scaled to ${scaleFactor}`);
+    // console.log(`Image loaded, size ${imgW}x${imgH}, scaled to ${scaleFactor}`);
 });
 
 // Transparency
@@ -132,6 +130,8 @@ document.getElementById('frameIntervalSlider').addEventListener('input', e => {
 
 function updateControlUI() {
     document.getElementById('zoomSlider').value = Math.sqrt(scale);
+    while (rotation < -180) {rotation += 360}
+    while (rotation > 180) {rotation -= 360}
     document.getElementById('rotateSlider').value = rotation;
 }
 
