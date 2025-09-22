@@ -10,7 +10,7 @@
 <body>
 
   <video id="camera" autoplay playsinline></video>
-  <img id="overlay" src="" alt="Overlay">
+  <img id="overlay" src="" alt="Overlay" draggable="false">
 
   <div id="controls">
     <label>
@@ -20,6 +20,14 @@
     <label>
       Transparency:
       <input type="range" id="opacitySlider" min="0" max="100" value="50">
+    </label>
+    <label display="none">
+      Zoom:
+      <input type="range" id="zoomSlider" min="0.01" max="2.0" value="1.0" step="0.01">
+    </label>
+    <label display="none">
+      Rotate:
+      <input type="range" id="rotateSlider" min="-180" max="180" value="0" step="1">
     </label>
   </div>
 

@@ -16,9 +16,9 @@ body { margin: 0; overflow: hidden; background: black; font-family: sans-serif; 
   #controls {
     position: absolute;
     bottom: 1em;
-    left: 50%;
-    transform: translateX(-50%);
-    background: rgba(0,0,0,0.6);
+    right: 1em;
+    /* transform: translateX(-50%); */
+    background: rgba(0,0,0,0.3);
     padding: 0.5em 1em;
     border-radius: 10px;
     color: white;
