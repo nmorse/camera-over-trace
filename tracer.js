@@ -131,8 +131,8 @@ document.getElementById('frameIntervalSlider').addEventListener('input', e => {
 
 
 function updateControlUI() {
-    document.getElementById('zoomSlider').value = scale;
-    // document.getElementById('rotateSlider').value = rotation;
+    document.getElementById('zoomSlider').value = Math.sqrt(scale);
+    document.getElementById('rotateSlider').value = rotation;
 }
 
 
@@ -185,6 +185,7 @@ function pMove(e) {
 
         scale = startScale * (newDist / startDistance);
         rotation = startRotation + (newAngle - startAngle);
+        updateControlUI()
     }
     updateTransform();
 };
