@@ -4,39 +4,79 @@ video.autoplay = true;
 video.playsInline = true;
 
 
-const cameraCanvas = document.getElementById('cameraCanvas');
-const ctx = cameraCanvas.getContext('2d');
+const displayCanvas = document.getElementById('displayCanvas');
+const displayCtx = displayCanvas.getContext('2d');
+const cameraCanvas = document.createElement("canvas");
+const cameraCtx = cameraCanvas.getContext('2d');
+const imageCanvas = document.createElement("canvas");
+const imageCtx = imageCanvas.getContext('2d');
+
 const cssW = window.innerWidth;
 const cssH = window.innerHeight;
 const dpr = window.devicePixelRatio || 1;
 
-cameraCanvas.width  = cssW * dpr;
+cameraCanvas.width = cssW * dpr;
 cameraCanvas.height = cssH * dpr;
-cameraCanvas.style.width  = cssW + "px";
+cameraCanvas.style.width = cssW + "px";
 cameraCanvas.style.height = cssH + "px";
-console.log("cssW, cssH, dpr:::", cssW, cssH, dpr);
+// console.log("cssW, cssH, dpr:::", cssW, cssH, dpr);
 
+const overlay = document.getElementById('overlay');
 
 video.addEventListener("loadedmetadata", () => {
-  cameraCanvas.width = video.videoWidth;
-  cameraCanvas.height = video.videoHeight;
+    cameraCanvas.width = video.videoWidth;
+    cameraCanvas.height = video.videoHeight;
+    imageCanvas.width = video.videoWidth;
+    imageCanvas.height = video.videoHeight;
+    displayCanvas.width = video.videoWidth;
+    displayCanvas.height = video.videoHeight;
 
-  const targetFPS = 5; // e.g. 10 fps
-  frameInterval = 1000 / targetFPS;
+    const targetFPS = 5; // e.g. 10 fps
+    frameInterval = 1000 / targetFPS;
 
-  let lastTime = 0;
+    let lastTime = 0;
 
-  function drawFrame(now) {
-    if (now - lastTime >= frameInterval) {
-      ctx.drawImage(video, 0, 0, cameraCanvas.width, cameraCanvas.height);
-      lastTime = now;
+    function drawFrame(now) {
+        if (now - lastTime >= frameInterval) {
+            cameraCtx.drawImage(video, 0, 0, cameraCanvas.width, cameraCanvas.height)
+            mixImageAndCamera()
+            lastTime = now;
+        }
+        requestAnimationFrame(drawFrame);
+    }
+    if (navigator.maxTouchPoints > 1) {
+        document.getElementById('zoomSlider').display = 'block';
+        document.getElementById('rotateSlider').display = 'block';
+        // browser supports multi-touch
     }
     requestAnimationFrame(drawFrame);
-  }
-
-  requestAnimationFrame(drawFrame);
 });
 
+function mixImageAndCamera() {
+    const imageData = imageCtx.getImageData(0, 0, imageCanvas.width, imageCanvas.height)
+    const cameraData = cameraCtx.getImageData(0, 0, cameraCanvas.width, cameraCanvas.height)
+    const dataI = imageData.data;
+    const dataC = cameraData.data;
+
+    for (let i = 0; i < dataC.length; i += 4) {
+        // subtract overlay from video (negative image - camera)
+        let r = dataI[i] - dataC[i];
+        let g = dataI[i + 1] - dataC[i + 1];
+        let b = dataI[i + 2] - dataC[i + 2];
+
+        // shift from [-255, 255] → [0, 255]
+        r = (r + 255) / 2;
+        g = (g + 255) / 2;
+        b = (b + 255) / 2;
+
+        dataC[i] = r;
+        dataC[i + 1] = g;
+        dataC[i + 2] = b;
+        // preserve full opacity
+        dataC[i + 3] = 255;
+    }
+    displayCtx.putImageData(cameraData, 0, 0);
+}
 
 async function startCamera() {
     try {
@@ -55,7 +95,6 @@ async function startCamera() {
     }
 }
 
-const overlay = document.getElementById('overlay');
 
 // Image upload
 document.getElementById('imageUpload').addEventListener('change', e => {
@@ -68,7 +107,6 @@ document.getElementById('imageUpload').addEventListener('change', e => {
             overlay.src = ev.target.result;
 
             overlay.style.transform = "translate(0px, 0px) scale(1) rotate(0deg)";
-            console.log('overlay.scrollWidth', overlay.scrollWidth);
         };
         reader.readAsDataURL(file);
     }
@@ -77,9 +115,10 @@ document.getElementById('imageUpload').addEventListener('change', e => {
 overlay.addEventListener("load", () => {
     const imgW = overlay.naturalWidth;
     const imgH = overlay.naturalHeight;
-    
+    imageCtx.drawImage(overlay, 0, 0, imageCanvas.width, imageCanvas.height)
+
     // Compute scaling factor to fit screen (cover mode: min, contain mode: min)
-    const scaleFactor = Math.min(cssW / imgW, cssH / imgH) * 0.85;
+    const scaleFactor = Math.max(cssW / imgW, cssH / imgH) * 0.85;
 
     // Reset transform state
     scale = scaleFactor;
@@ -115,7 +154,7 @@ let initialX = 0, initialY = 0;
 
 // non-pointer capable display
 document.getElementById('zoomSlider').addEventListener('input', e => {
-    scale = e.target.value**2;
+    scale = e.target.value ** 2;
     updateTransform()
 });
 // non-pointer capable display
@@ -130,8 +169,8 @@ document.getElementById('frameIntervalSlider').addEventListener('input', e => {
 
 function updateControlUI() {
     document.getElementById('zoomSlider').value = Math.sqrt(scale);
-    while (rotation < -180) {rotation += 360}
-    while (rotation > 180) {rotation -= 360}
+    while (rotation < -180) { rotation += 360 }
+    while (rotation > 180) { rotation -= 360 }
     document.getElementById('rotateSlider').value = rotation;
 }
 
@@ -202,10 +241,15 @@ overlay.addEventListener("pointerleave", e => {
 overlay.addEventListener("pointerout", e => {
     pointers.delete(e.pointerId);
 });
+document.getElementById('tipdown').addEventListener('click', e => {
+    document.getElementById('controls').style.display = 'none'
+    document.getElementById('tipup').style.display = 'block'
+    overlay.style.opacity = 0.01 // keep a bit more than 0 opacity to track pointer events
+})
+document.getElementById('tipup').addEventListener('click', e => {
+    document.getElementById('controls').style.display = 'flex'
+    document.getElementById('tipup').style.display = 'none'
+    overlay.style.opacity = document.getElementById('opacitySlider').value / 100
+})
 
 startCamera();
-if (navigator.maxTouchPoints > 1) {
-    document.getElementById('zoomSlider').display = 'block';
-    document.getElementById('rotateSlider').display = 'block';
-    // browser supports multi-touch
-}
