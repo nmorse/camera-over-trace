@@ -63,11 +63,28 @@ video.addEventListener("loadedmetadata", () => {
     requestAnimationFrame(drawFrame);
 });
 
-const flip = (v, range = 255, base = 0) => range - v + base;
+const flip = (v) => 255 - v;
 const subtract = (a, b, reverse = false) => reverse ? b - a : a - b;
 
 function mixImageAndCamera() {
+    imageCtx.save()
+    imageCtx.clearRect(0,0,imageCanvas.width, imageCanvas.height)
+    // translate(${translateX}px, ${translateY}px) scale(${scale}) rotate(${rotation}deg)
+
+    imageCtx.translate(imageCanvas.width/2, imageCanvas.height/2)
+    imageCtx.rotate(rotation/(180/Math.PI))
+    imageCtx.translate(-imageCanvas.width/2, -imageCanvas.height/2)
+
+    imageCtx.translate(translateX, translateY)
+
+    imageCtx.translate(imageCanvas.width/2, imageCanvas.height/2)
+    imageCtx.scale(scale, scale)
+    imageCtx.translate(-imageCanvas.width/2, -imageCanvas.height/2)
+
+    imageCtx.drawImage(overlay, 0, 0, imageCanvas.width, imageCanvas.height)    // Compute scaling factor to fit screen (cover mode: min, contain mode: min)
+
     const imageData = imageCtx.getImageData(0, 0, imageCanvas.width, imageCanvas.height)
+    imageCtx.restore()
     const cameraData = cameraCtx.getImageData(0, 0, cameraCanvas.width, cameraCanvas.height)
     const dataI = imageData.data;
     const dataC = cameraData.data;
@@ -88,7 +105,7 @@ function mixImageAndCamera() {
         // // dataC[i + 2] = b;
 
         // all in-one statement assignments
-        dataC[i] =     Math.min(255, dataI[i] + flip(dataC[i]));
+        dataC[i] = Math.min(255, dataI[i] + flip(dataC[i]));
         dataC[i + 1] = Math.min(255, dataI[i + 1] + flip(dataC[i + 1]));
         dataC[i + 2] = Math.min(255, dataI[i + 2] + flip(dataC[i + 2]));
 
@@ -138,13 +155,13 @@ overlay.addEventListener("load", () => {
     imageCtx.drawImage(overlay, 0, 0, imageCanvas.width, imageCanvas.height)    // Compute scaling factor to fit screen (cover mode: min, contain mode: min)
 
     // Compute scaling factor to fit screen (cover mode: min, contain mode: min)
-    const scaleFactor = Math.max(cssW / imgW, cssH / imgH) * 0.85;
+    const scaleFactor = Math.max(cssW / imgW, cssH / imgH);
 
     // Reset transform state
     scale = scaleFactor;
     rotation = 0;
-    translateX = (cssW - imgW) / 2;
-    translateY = (cssH - imgH) / 2;
+    // translateX = (cssW - imgW) / 2;
+    // translateY = (cssH - imgH) / 2;
     updateControlUI()
 
     updateTransform();
