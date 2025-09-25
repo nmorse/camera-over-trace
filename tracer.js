@@ -42,8 +42,8 @@ video.addEventListener("loadedmetadata", () => {
             if (flipVertically) {
                 // flip vertically
                 cameraCtx.save();
-                cameraCtx.translate(0, cameraCanvas.height);
-                cameraCtx.scale(1, -1);
+                cameraCtx.translate(cameraCanvas.width, cameraCanvas.height);
+                cameraCtx.scale(-1, -1);
                 cameraCtx.drawImage(video, 0, 0, cameraCanvas.width, cameraCanvas.height);
                 cameraCtx.restore();
             }
