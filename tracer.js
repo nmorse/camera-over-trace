@@ -1,5 +1,6 @@
 const video = document.createElement('video');
-let frameInterval = 200 // milliseconds
+let frameInterval = 1000 // milliseconds
+let flipVertically = false;
 video.autoplay = true;
 video.playsInline = true;
 
@@ -31,14 +32,24 @@ video.addEventListener("loadedmetadata", () => {
     displayCanvas.width = video.videoWidth;
     displayCanvas.height = video.videoHeight;
 
-    const targetFPS = 5; // e.g. 10 fps
+    const targetFPS = 1; // e.g. 10 fps
     frameInterval = 1000 / targetFPS;
 
     let lastTime = 0;
 
     function drawFrame(now) {
         if (now - lastTime >= frameInterval) {
-            cameraCtx.drawImage(video, 0, 0, cameraCanvas.width, cameraCanvas.height)
+            if (flipVertically) {
+                // flip vertically
+                cameraCtx.save();
+                cameraCtx.translate(0, cameraCanvas.height);
+                cameraCtx.scale(1, -1);
+                cameraCtx.drawImage(video, 0, 0, cameraCanvas.width, cameraCanvas.height);
+                cameraCtx.restore();
+            }
+            else {
+                cameraCtx.drawImage(video, 0, 0, cameraCanvas.width, cameraCanvas.height)
+            }
             mixImageAndCamera()
             lastTime = now;
         }
@@ -52,6 +63,9 @@ video.addEventListener("loadedmetadata", () => {
     requestAnimationFrame(drawFrame);
 });
 
+const flip = (v, range = 255, base = 0) => range - v + base;
+const subtract = (a, b, reverse = false) => reverse ? b - a : a - b;
+
 function mixImageAndCamera() {
     const imageData = imageCtx.getImageData(0, 0, imageCanvas.width, imageCanvas.height)
     const cameraData = cameraCtx.getImageData(0, 0, cameraCanvas.width, cameraCanvas.height)
@@ -59,19 +73,25 @@ function mixImageAndCamera() {
     const dataC = cameraData.data;
 
     for (let i = 0; i < dataC.length; i += 4) {
-        // subtract overlay from video (negative image - camera)
-        let r = dataI[i] - dataC[i];
-        let g = dataI[i + 1] - dataC[i + 1];
-        let b = dataI[i + 2] - dataC[i + 2];
+        // // // rpn: camera flip image + 
+        // // // (keep for debugging and future development)
+        // // let r = dataI[i] + flip(dataC[i]);
+        // // let g = dataI[i + 1] + flip(dataC[i + 1]);
+        // // let b = dataI[i + 2] + flip(dataC[i + 2]);
 
-        // shift from [-255, 255] → [0, 255]
-        r = (r + 255) / 2;
-        g = (g + 255) / 2;
-        b = (b + 255) / 2;
+        // // r = Math.min(255, r);
+        // // g = Math.min(255, g);
+        // // b = Math.min(255, b);
 
-        dataC[i] = r;
-        dataC[i + 1] = g;
-        dataC[i + 2] = b;
+        // // dataC[i] =     r;
+        // // dataC[i + 1] = g;
+        // // dataC[i + 2] = b;
+
+        // all in-one statement assignments
+        dataC[i] =     Math.min(255, dataI[i] + flip(dataC[i]));
+        dataC[i + 1] = Math.min(255, dataI[i + 1] + flip(dataC[i + 1]));
+        dataC[i + 2] = Math.min(255, dataI[i + 2] + flip(dataC[i + 2]));
+
         // preserve full opacity
         dataC[i + 3] = 255;
     }
@@ -115,7 +135,7 @@ document.getElementById('imageUpload').addEventListener('change', e => {
 overlay.addEventListener("load", () => {
     const imgW = overlay.naturalWidth;
     const imgH = overlay.naturalHeight;
-    imageCtx.drawImage(overlay, 0, 0, imageCanvas.width, imageCanvas.height)
+    imageCtx.drawImage(overlay, 0, 0, imageCanvas.width, imageCanvas.height)    // Compute scaling factor to fit screen (cover mode: min, contain mode: min)
 
     // Compute scaling factor to fit screen (cover mode: min, contain mode: min)
     const scaleFactor = Math.max(cssW / imgW, cssH / imgH) * 0.85;
@@ -250,6 +270,9 @@ document.getElementById('tipup').addEventListener('click', e => {
     document.getElementById('controls').style.display = 'flex'
     document.getElementById('tipup').style.display = 'none'
     overlay.style.opacity = document.getElementById('opacitySlider').value / 100
+})
+document.getElementById('flipVideoVert').addEventListener('click', e => {
+    flipVertically = !flipVertically
 })
 
 startCamera();
