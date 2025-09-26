@@ -1,6 +1,9 @@
 const video = document.createElement('video');
 let frameInterval = 1000 // milliseconds
 let flipVertically = false;
+let invertColorC = true;
+let opacityC = 1;
+let opacityI = 1;
 video.autoplay = true;
 video.playsInline = true;
 
@@ -55,11 +58,11 @@ video.addEventListener("loadedmetadata", () => {
         }
         requestAnimationFrame(drawFrame);
     }
-    if (navigator.maxTouchPoints > 1) {
-        document.getElementById('zoomSlider').display = 'block';
-        document.getElementById('rotateSlider').display = 'block';
-        // browser supports multi-touch
-    }
+    // if (navigator.maxTouchPoints > 1) {
+    //     document.getElementById('zoomSlider').display = 'block';
+    //     document.getElementById('rotateSlider').display = 'block';
+    //     // browser supports multi-touch
+    // }
     requestAnimationFrame(drawFrame);
 });
 
@@ -67,24 +70,25 @@ const flip = (v) => 255 - v;
 const subtract = (a, b, reverse = false) => reverse ? b - a : a - b;
 
 function mixImageAndCamera() {
-    imageCtx.save()
-    imageCtx.clearRect(0,0,imageCanvas.width, imageCanvas.height)
-    // translate(${translateX}px, ${translateY}px) scale(${scale}) rotate(${rotation}deg)
+    // imageCtx.save()
+    // imageCtx.clearRect(0,0,imageCanvas.width, imageCanvas.height)
+    // // translate(${translateX}px, ${translateY}px) scale(${scale}) rotate(${rotation}deg)
 
-    imageCtx.translate(imageCanvas.width/2, imageCanvas.height/2)
-    imageCtx.rotate(rotation/(180/Math.PI))
-    imageCtx.translate(-imageCanvas.width/2, -imageCanvas.height/2)
+    // // imageCtx.translate(imageCanvas.width/2, imageCanvas.height/2)
+    // // imageCtx.rotate(rotation/(180/Math.PI))
+    // // imageCtx.translate(-imageCanvas.width/2, -imageCanvas.height/2)
 
-    imageCtx.translate(translateX, translateY)
+    // imageCtx.translate(translateX, translateY)
 
-    imageCtx.translate(imageCanvas.width/2, imageCanvas.height/2)
-    imageCtx.scale(scale, scale)
-    imageCtx.translate(-imageCanvas.width/2, -imageCanvas.height/2)
+    // // imageCtx.translate(imageCanvas.width/2, imageCanvas.height/2)
+    // // imageCtx.scale(scale, scale)
+    // // imageCtx.translate(-imageCanvas.width/2, -imageCanvas.height/2)
 
-    imageCtx.drawImage(overlay, 0, 0, imageCanvas.width, imageCanvas.height)    // Compute scaling factor to fit screen (cover mode: min, contain mode: min)
+
+    // imageCtx.drawImage(overlay, 0, 0, imageCanvas.width, imageCanvas.height)    // Compute scaling factor to fit screen (cover mode: min, contain mode: min)
 
     const imageData = imageCtx.getImageData(0, 0, imageCanvas.width, imageCanvas.height)
-    imageCtx.restore()
+    //imageCtx.restore()
     const cameraData = cameraCtx.getImageData(0, 0, cameraCanvas.width, cameraCanvas.height)
     const dataI = imageData.data;
     const dataC = cameraData.data;
@@ -105,9 +109,9 @@ function mixImageAndCamera() {
         // // dataC[i + 2] = b;
 
         // all in-one statement assignments
-        dataC[i] = Math.min(255, dataI[i] + flip(dataC[i]));
-        dataC[i + 1] = Math.min(255, dataI[i + 1] + flip(dataC[i + 1]));
-        dataC[i + 2] = Math.min(255, dataI[i + 2] + flip(dataC[i + 2]));
+        dataC[i] =     Math.min(255, Math.floor(dataI[i]*opacityI) +     Math.floor((invertColorC? flip(dataC[i]): dataC[i])         * opacityC));
+        dataC[i + 1] = Math.min(255, Math.floor(dataI[i + 1]*opacityI) + Math.floor((invertColorC? flip(dataC[i + 1]): dataC[i + 1]) * opacityC));
+        dataC[i + 2] = Math.min(255, Math.floor(dataI[i + 2]*opacityI) + Math.floor((invertColorC? flip(dataC[i + 2]): dataC[i + 2]) * opacityC));
 
         // preserve full opacity
         dataC[i + 3] = 255;
@@ -139,11 +143,11 @@ document.getElementById('imageUpload').addEventListener('change', e => {
     if (file) {
         const reader = new FileReader();
         reader.onload = ev => {
-            console.log('ev.target', ev.target);
-            console.log('screen.availWidth', screen.availWidth);
+            // console.log('ev.target', ev.target);
+            // console.log('screen.availWidth', screen.availWidth);
             overlay.src = ev.target.result;
-
-            overlay.style.transform = "translate(0px, 0px) scale(1) rotate(0deg)";
+            overlay.style.opacity = 0.01
+            // overlay.style.transform = "translate(0px, 0px) scale(1) rotate(0deg)";
         };
         reader.readAsDataURL(file);
     }
@@ -152,26 +156,33 @@ document.getElementById('imageUpload').addEventListener('change', e => {
 overlay.addEventListener("load", () => {
     const imgW = overlay.naturalWidth;
     const imgH = overlay.naturalHeight;
-    imageCtx.drawImage(overlay, 0, 0, imageCanvas.width, imageCanvas.height)    // Compute scaling factor to fit screen (cover mode: min, contain mode: min)
+    const ratio = Math.min(cameraCanvas.width/imgW, cameraCanvas.height/imgH);
+
+    imageCtx.fillStyle = 'white'
+    imageCtx.fillRect(0, 0, imageCanvas.width, imageCanvas.height)    // Compute scaling factor to fit screen (cover mode: min, contain mode: min)
+    imageCtx.drawImage(overlay, Math.abs(imgW*ratio - imageCanvas.width)/2, Math.abs(imgH*ratio - imageCanvas.height)/2, imgW*ratio, imgH*ratio)    // Compute scaling factor to fit screen (cover mode: min, contain mode: min)
 
     // Compute scaling factor to fit screen (cover mode: min, contain mode: min)
     const scaleFactor = Math.max(cssW / imgW, cssH / imgH);
 
     // Reset transform state
-    scale = scaleFactor;
-    rotation = 0;
+    // scale = scaleFactor;
+    // rotation = 0;
     // translateX = (cssW - imgW) / 2;
     // translateY = (cssH - imgH) / 2;
-    updateControlUI()
+    // updateControlUI()
 
-    updateTransform();
+    // updateTransform();
 
     // console.log(`Image loaded, size ${imgW}x${imgH}, scaled to ${scaleFactor}`);
 });
 
 // Transparency
-document.getElementById('opacitySlider').addEventListener('input', e => {
-    overlay.style.opacity = e.target.value / 100;
+document.getElementById('opacityC').addEventListener('input', e => {
+    opacityC = e.target.value / 100;
+});
+document.getElementById('opacityI').addEventListener('input', e => {
+    opacityI = e.target.value / 100;
 });
 
 // --- Drag + Pinch Zoom + Rotate ---
@@ -182,34 +193,34 @@ let startAngle = 0;
 let startScale = 1;
 let startRotation = 0;
 
-let scale = 1;
-let rotation = 0;
+// let scale = 1;
+// let rotation = 0;
 
 let startX = 0, startY = 0;
 let translateX = 0, translateY = 0;
 let initialX = 0, initialY = 0;
 
 // non-pointer capable display
-document.getElementById('zoomSlider').addEventListener('input', e => {
-    scale = e.target.value ** 2;
-    updateTransform()
-});
-// non-pointer capable display
-document.getElementById('rotateSlider').addEventListener('input', e => {
-    rotation = e.target.value
-    updateTransform()
-});
+// document.getElementById('zoomSlider').addEventListener('input', e => {
+//     scale = e.target.value ** 2;
+//     updateTransform()
+// });
+// // non-pointer capable display
+// document.getElementById('rotateSlider').addEventListener('input', e => {
+//     rotation = e.target.value
+//     updateTransform()
+// });
 document.getElementById('frameIntervalSlider').addEventListener('input', e => {
     frameInterval = 1000 / e.target.value
 });
 
 
-function updateControlUI() {
-    document.getElementById('zoomSlider').value = Math.sqrt(scale);
-    while (rotation < -180) { rotation += 360 }
-    while (rotation > 180) { rotation -= 360 }
-    document.getElementById('rotateSlider').value = rotation;
-}
+// function updateControlUI() {
+//     document.getElementById('zoomSlider').value = Math.sqrt(scale);
+//     while (rotation < -180) { rotation += 360 }
+//     while (rotation > 180) { rotation -= 360 }
+//     document.getElementById('rotateSlider').value = rotation;
+// }
 
 
 function getDistance(p1, p2) {
@@ -220,64 +231,64 @@ function getAngle(p1, p2) {
     return Math.atan2(p2.clientY - p1.clientY, p2.clientX - p1.clientX) * 180 / Math.PI;
 }
 
-function updateTransform() {
-    overlay.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale}) rotate(${rotation}deg)`;
-}
+// function updateTransform() {
+//     overlay.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale}) rotate(${rotation}deg)`;
+// }
 
-overlay.addEventListener("pointerdown", pDown);
-function pDown(e) {
-    overlay.setPointerCapture(e.pointerId);
-    pointers.set(e.pointerId, e);
-    if (pointers.size === 1) {
-        startX = e.clientX;
-        startY = e.clientY;
-        initialX = translateX;
-        initialY = translateY;
-    } else if (pointers.size === 2) {
-        const [p1, p2] = [...pointers.values()];
-        startDistance = getDistance(p1, p2);
-        startAngle = getAngle(p1, p2);
-        startScale = scale;
-        startRotation = rotation;
-    }
-}
+// overlay.addEventListener("pointerdown", pDown);
+// function pDown(e) {
+//     overlay.setPointerCapture(e.pointerId);
+//     pointers.set(e.pointerId, e);
+//     if (pointers.size === 1) {
+//         startX = e.clientX;
+//         startY = e.clientY;
+//         initialX = translateX;
+//         initialY = translateY;
+//     } else if (pointers.size === 2) {
+//         const [p1, p2] = [...pointers.values()];
+//         startDistance = getDistance(p1, p2);
+//         startAngle = getAngle(p1, p2);
+//         startScale = scale;
+//         startRotation = rotation;
+//     }
+// }
 
-overlay.addEventListener("pointermove", pMove);
-function pMove(e) {
-    if (!pointers.has(e.pointerId)) return;
-    pointers.set(e.pointerId, e);
+// overlay.addEventListener("pointermove", pMove);
+// function pMove(e) {
+//     if (!pointers.has(e.pointerId)) return;
+//     pointers.set(e.pointerId, e);
 
-    if (pointers.size === 1) {
-        // Drag
-        const dx = e.clientX - startX;
-        const dy = e.clientY - startY;
-        translateX = initialX + dx;
-        translateY = initialY + dy;
-    } else if (pointers.size === 2) {
-        // Pinch + Rotate
-        const [p1, p2] = [...pointers.values()];
-        const newDist = getDistance(p1, p2);
-        const newAngle = getAngle(p1, p2);
+//     if (pointers.size === 1) {
+//         // Drag
+//         const dx = e.clientX - startX;
+//         const dy = e.clientY - startY;
+//         translateX = initialX + dx;
+//         translateY = initialY + dy;
+//     } else if (pointers.size === 2) {
+//         // Pinch + Rotate
+//         const [p1, p2] = [...pointers.values()];
+//         const newDist = getDistance(p1, p2);
+//         const newAngle = getAngle(p1, p2);
 
-        scale = startScale * (newDist / startDistance);
-        rotation = startRotation + (newAngle - startAngle);
-        updateControlUI()
-    }
-    updateTransform();
-};
+//         scale = startScale * (newDist / startDistance);
+//         rotation = startRotation + (newAngle - startAngle);
+//         // updateControlUI()
+//     }
+//     updateTransform();
+// };
 
-overlay.addEventListener("pointerup", e => {
-    pointers.delete(e.pointerId);
-});
-overlay.addEventListener("pointercancel", e => {
-    pointers.delete(e.pointerId);
-});
-overlay.addEventListener("pointerleave", e => {
-    pointers.delete(e.pointerId);
-});
-overlay.addEventListener("pointerout", e => {
-    pointers.delete(e.pointerId);
-});
+// overlay.addEventListener("pointerup", e => {
+//     pointers.delete(e.pointerId);
+// });
+// overlay.addEventListener("pointercancel", e => {
+//     pointers.delete(e.pointerId);
+// });
+// overlay.addEventListener("pointerleave", e => {
+//     pointers.delete(e.pointerId);
+// });
+// overlay.addEventListener("pointerout", e => {
+//     pointers.delete(e.pointerId);
+// });
 document.getElementById('tipdown').addEventListener('click', e => {
     document.getElementById('controls').style.display = 'none'
     document.getElementById('tipup').style.display = 'block'
@@ -286,10 +297,13 @@ document.getElementById('tipdown').addEventListener('click', e => {
 document.getElementById('tipup').addEventListener('click', e => {
     document.getElementById('controls').style.display = 'flex'
     document.getElementById('tipup').style.display = 'none'
-    overlay.style.opacity = document.getElementById('opacitySlider').value / 100
+    // overlay.style.opacity = document.getElementById('opacitySlider').value / 100
 })
 document.getElementById('flipVideoVert').addEventListener('click', e => {
     flipVertically = !flipVertically
+})
+document.getElementById('invertColorC').addEventListener('click', e => {
+    invertColorC = !invertColorC
 })
 
 startCamera();
