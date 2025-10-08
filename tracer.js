@@ -1,8 +1,11 @@
 const video = document.createElement('video');
 let frameInterval = 1000 // milliseconds
 let flipVertically = false;
+let flipHorizontally = false;
 let invertColorC = true;
 let markOverPaint = false;
+// color from a color picker UI component
+let selectedColor = { r: 1, g: 1, b: 1, a: 0.5 };
 let opacityC = 1;
 let opacityI = 1;
 video.autoplay = true;
@@ -43,11 +46,13 @@ video.addEventListener("loadedmetadata", () => {
 
     function drawFrame(now) {
         if (now - lastTime >= frameInterval) {
-            if (flipVertically) {
+            if (flipVertically || flipHorizontally) {
                 // flip vertically
+                const xScale = flipHorizontally ? -1 : 1;
+                const yScale = flipVertically ? -1 : 1;
                 cameraCtx.save();
-                cameraCtx.translate(cameraCanvas.width, cameraCanvas.height);
-                cameraCtx.scale(-1, -1);
+                cameraCtx.translate(flipHorizontally? cameraCanvas.width: 0, flipVertically? cameraCanvas.height: 0);
+                cameraCtx.scale(xScale, yScale);
                 cameraCtx.drawImage(video, 0, 0, cameraCanvas.width, cameraCanvas.height);
                 cameraCtx.restore();
             }
@@ -72,13 +77,13 @@ function mixImageAndCamera() {
     const dataC = cameraData.data;
 
     for (let i = 0; i < dataC.length; i += 4) {
-        const nR = Math.floor(dataI[i]*opacityI)     + Math.floor((invertColorC? flip(dataC[i]): dataC[i])         * opacityC)
-        const nG = Math.floor(dataI[i+1]*opacityI)     + Math.floor((invertColorC? flip(dataC[i+1]): dataC[i+1])         * opacityC)
-        const nB = Math.floor(dataI[i+2]*opacityI)     + Math.floor((invertColorC? flip(dataC[i+2]): dataC[i+2])         * opacityC)
+        const nR = Math.floor(dataI[i]*opacityI)       + Math.floor((invertColorC? flip(dataC[i]): dataC[i])     * opacityC)
+        const nG = Math.floor(dataI[i+1]*opacityI)     + Math.floor((invertColorC? flip(dataC[i+1]): dataC[i+1]) * opacityC)
+        const nB = Math.floor(dataI[i+2]*opacityI)     + Math.floor((invertColorC? flip(dataC[i+2]): dataC[i+2]) * opacityC)
         
-        dataC[i] =     markOverPaint && nR > 255? 0: Math.min(255, nR);
-        dataC[i + 1] = markOverPaint && nG > 255? 0: Math.min(255, nG);
-        dataC[i + 2] = markOverPaint && nB > 255? 0: Math.min(255, nB);
+        dataC[i] =     markOverPaint && nR > 255? ((i/4)%4)*128: Math.min(255, nR);
+        dataC[i + 1] = markOverPaint && nG > 255? ((i/4)%4)*128: Math.min(255, nG);
+        dataC[i + 2] = markOverPaint && nB > 255? ((i/4)%4)*128: Math.min(255, nB);
 
         // preserve full opacity
         dataC[i + 3] = 255;
@@ -145,6 +150,15 @@ document.getElementById('opacityI').addEventListener('input', e => {
 document.getElementById('frameIntervalSlider').addEventListener('input', e => {
     frameInterval = 1000 / e.target.value
 });
+document.getElementById('colorPicker').addEventListener('input', e => {
+    const hex = e.target.value;
+    selectedColor = {
+        r: parseInt(hex.slice(1, 3), 16)/255,
+        g: parseInt(hex.slice(3, 5), 16)/255,
+        b: parseInt(hex.slice(5, 7), 16)/255,
+        a: 0.5 // semi-transparent
+    };
+});
 
 function getDistance(p1, p2) {
     return Math.hypot(p1.clientX - p2.clientX, p1.clientY - p2.clientY);
@@ -167,6 +181,10 @@ document.getElementById('tipup').addEventListener('click', e => {
 document.getElementById('flipVideoVert').addEventListener('click', e => {
     flipVertically = !flipVertically
 })
+document.getElementById('flipVideoHori').addEventListener('click', e => {
+    flipHorizontally = !flipHorizontally
+})
+
 document.getElementById('invertColorC').addEventListener('click', e => {
     invertColorC = !invertColorC
 })
