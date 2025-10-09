@@ -39,10 +39,10 @@
       <button id="invertColorC">Invert Camera Color</button>
     </div>
     <div style="display: flex;">
-    <label>
-      Image Opacity:
-      <input type="range" id="opacityI" min="0" max="100" value="100" step="2">
-    </label>
+      <label>
+        Image Opacity:
+        <input type="range" id="opacityI" min="0" max="100" value="100" step="2">
+      </label>
       <button id="markOverPaint">Mark Over Paint</button>
     </div>
     <!--<label display="none">
@@ -54,7 +54,10 @@
       Rotate:
       <input type="range" id="rotateSlider" min="-180" max="180" value="0" step="1">
     </label> -->
-    <input type="color" id="colorPicker" value="#ffffff">
+    <div style="display: flex;">
+        <input type="color" id="colorPicker" value="#ffffff">
+      <button id="clipToColor">Clip to Color</button>
+    </div>
   </div>
 
   <script src="./tracer.js"></script>

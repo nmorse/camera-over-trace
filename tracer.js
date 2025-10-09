@@ -4,8 +4,9 @@ let flipVertically = false;
 let flipHorizontally = false;
 let invertColorC = true;
 let markOverPaint = false;
-// color from a color picker UI component
-let selectedColor = { r: 1, g: 1, b: 1, a: 0.5 };
+// user selected color from a color picker UI component
+let sc = { r: 0, g: 0, b: 0, a: 0.5 };
+let clipToColor = false;
 let opacityC = 1;
 let opacityI = 1;
 video.autoplay = true;
@@ -77,9 +78,10 @@ function mixImageAndCamera() {
     const dataC = cameraData.data;
 
     for (let i = 0; i < dataC.length; i += 4) {
-        const nR = Math.floor(dataI[i]*opacityI)       + Math.floor((invertColorC? flip(dataC[i]): dataC[i])     * opacityC)
-        const nG = Math.floor(dataI[i+1]*opacityI)     + Math.floor((invertColorC? flip(dataC[i+1]): dataC[i+1]) * opacityC)
-        const nB = Math.floor(dataI[i+2]*opacityI)     + Math.floor((invertColorC? flip(dataC[i+2]): dataC[i+2]) * opacityC)
+        const ic = (dataI[i] < sc.r && dataI[i+1] < sc.g && dataI[i+2] < sc.b)  ? sc: {r:255, g:255, b:255}
+        const nR = Math.floor((clipToColor? ic.r: dataI[i])*opacityI)   + Math.floor((invertColorC? flip(dataC[i]): dataC[i])     * opacityC)
+        const nG = Math.floor((clipToColor? ic.g: dataI[i+1])*opacityI) + Math.floor((invertColorC? flip(dataC[i+1]): dataC[i+1]) * opacityC)
+        const nB = Math.floor((clipToColor? ic.b: dataI[i+2])*opacityI) + Math.floor((invertColorC? flip(dataC[i+2]): dataC[i+2]) * opacityC)
         
         dataC[i] =     markOverPaint && nR > 255? ((i/4)%4)*128: Math.min(255, nR);
         dataC[i + 1] = markOverPaint && nG > 255? ((i/4)%4)*128: Math.min(255, nG);
@@ -152,10 +154,10 @@ document.getElementById('frameIntervalSlider').addEventListener('input', e => {
 });
 document.getElementById('colorPicker').addEventListener('input', e => {
     const hex = e.target.value;
-    selectedColor = {
-        r: parseInt(hex.slice(1, 3), 16)/255,
-        g: parseInt(hex.slice(3, 5), 16)/255,
-        b: parseInt(hex.slice(5, 7), 16)/255,
+    sc = {
+        r: parseInt(hex.slice(1, 3), 16),
+        g: parseInt(hex.slice(3, 5), 16),
+        b: parseInt(hex.slice(5, 7), 16),
         a: 0.5 // semi-transparent
     };
 });
@@ -190,6 +192,10 @@ document.getElementById('invertColorC').addEventListener('click', e => {
 })
 document.getElementById('markOverPaint').addEventListener('click', e => {
     markOverPaint = !markOverPaint
+})
+
+document.getElementById('clipToColor').addEventListener('click', e => {
+    clipToColor = !clipToColor
 })
 
 startCamera();
